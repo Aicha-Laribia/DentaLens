@@ -1,0 +1,230 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+const resources = {
+  en: {
+    translation: {
+      // Header
+      "brand": "DentaLens",
+      "tagline": "AI Diagnostics",
+
+      // Landing
+      "hero_title": "Smart Dental",
+      "hero_subtitle": "Care for Everyone.",
+      "hero_desc": "AI-powered diagnostics and professional triage. Designed for accuracy, built for people.",
+
+      // Cards
+      "selfie_title": "Selfie Triage",
+      "selfie_desc": "Instant analysis of your smile to detect urgency, gum health, and visible pathologies.",
+      "selfie_cta": "Start Scan",
+      "xray_title": "X-Ray Scan",
+      "xray_desc": "Upload clinical radiographs for detailed YOLOv8-powered bounding box detection.",
+      "xray_cta": "Upload X-Ray",
+
+      // Path choice
+      "choose_title": "What do you have with you?",
+      "choose_subtitle": "Choose your path — we'll take it from there.",
+      "path_xray_badge": "Full diagnosis",
+      "path_selfie_badge": "Quick triage",
+      "path_xray_title": "I have an X-ray",
+      "path_xray_desc": "Upload your dental radiograph. Our AI detects decay, restorations, and more — with coordinates, costs, and progression timelines.",
+      "path_selfie_title": "I only have my phone",
+      "path_selfie_desc": "Take 4 guided photos. AI performs clinical visual triage and finds the nearest dental center near you.",
+      "get_started": "Get started →",
+
+      // Selfie flow
+      "selfie_flow_title": "Take 4 guided photos",
+      "selfie_flow_subtitle": "Use your phone flashlight for best results.",
+      "shot_front": "Front view",
+      "shot_upper": "Upper teeth",
+      "shot_lower": "Lower teeth",
+      "shot_side": "Left side",
+      "shot_front_inst": "Open wide and show your front teeth.",
+      "shot_upper_inst": "Tilt your head back. Show your upper arch.",
+      "shot_lower_inst": "Tilt forward. Show your lower arch.",
+      "shot_side_inst": "Turn slightly left. Show molars if possible.",
+      "captured": "✓ Captured",
+      "analyze_btn": "Analyze my mouth →",
+      "analyzing": "AI is examining your photos...",
+
+      // Xray flow
+      "xray_flow_title": "Upload your X-ray",
+      "xray_flow_subtitle": "Panoramic, periapical, or bitewing — JPEG or PNG",
+      "drop_here": "Drop your X-ray here",
+      "or_browse": "or click to browse",
+      "use_demo": "Use demo data (no token consumed)",
+
+      // Results
+      "tab_xray": "🩻 X-Ray",
+      "tab_3d": "🦷 3D View",
+      "tab_progression": "⏳ If Untreated",
+      "tab_opinion": "🤔 Second Opinion",
+      "tab_costs": "💰 Costs",
+      "tab_nearby": "📍 Nearby",
+      "tab_qa": "💬 Q&A",
+      "urgent": "Urgent",
+      "monitor": "Monitor",
+      "ok": "OK",
+      "detected_issues": "Detected Issues",
+      "confidence": "confidence",
+
+      // Nearby
+      "nearby_xray_title": "🏥 Nearest X-Ray / Imaging Centers",
+      "nearby_dentist_title": "🦷 Nearest Dental Clinics",
+      "finding_nearby": "Finding clinics near you...",
+      "open_now": "● Open now",
+      "closed": "● Closed",
+      "directions": "📍 Directions",
+      "more_info": "ℹ️ More info",
+      "location_denied": "Location access denied. Enable location to find nearby clinics.",
+
+      // Q&A
+      "qa_common": "💬 Common Questions About Your Result",
+      "disclaimer": "⚠️ This is an AI screening tool, not a clinical diagnosis. Always consult a qualified dentist.",
+
+      // Footer
+      "footer_disclaimer": "⚠️ Demo prototype — not a clinical tool"
+    }
+  },
+  fr: {
+    translation: {
+      "brand": "DentaLens",
+      "tagline": "Diagnostics IA",
+      "hero_title": "Soins Dentaires",
+      "hero_subtitle": "Intelligents pour tous.",
+      "hero_desc": "Diagnostics par IA et triage professionnel. Conçu pour la précision, pensé pour les patients.",
+      "selfie_title": "Triage Selfie",
+      "selfie_desc": "Analyse instantanée de votre sourire pour détecter l'urgence, la santé des gencives et les pathologies visibles.",
+      "selfie_cta": "Commencer",
+      "xray_title": "Radiographie",
+      "xray_desc": "Uploadez vos radiographies cliniques pour une détection YOLOv8 avec coordonnées de boîtes englobantes.",
+      "xray_cta": "Uploader la radio",
+      "choose_title": "Qu'avez-vous avec vous ?",
+      "choose_subtitle": "Choisissez votre chemin — on s'occupe du reste.",
+      "path_xray_badge": "Diagnostic complet",
+      "path_selfie_badge": "Triage rapide",
+      "path_xray_title": "J'ai une radiographie",
+      "path_xray_desc": "Uploadez votre radio. Notre IA détecte caries, restaurations et plus — avec coordonnées, coûts et chronologie.",
+      "path_selfie_title": "Je n'ai que mon téléphone",
+      "path_selfie_desc": "Prenez 4 photos guidées. L'IA effectue un triage visuel et trouve le centre dentaire le plus proche.",
+      "get_started": "Commencer →",
+      "selfie_flow_title": "Prenez 4 photos guidées",
+      "selfie_flow_subtitle": "Utilisez la lampe de votre téléphone pour de meilleurs résultats.",
+      "shot_front": "Vue de face",
+      "shot_upper": "Dents supérieures",
+      "shot_lower": "Dents inférieures",
+      "shot_side": "Côté gauche",
+      "shot_front_inst": "Ouvrez grand et montrez vos dents de devant.",
+      "shot_upper_inst": "Inclinez la tête en arrière. Montrez l'arcade supérieure.",
+      "shot_lower_inst": "Inclinez vers l'avant. Montrez l'arcade inférieure.",
+      "shot_side_inst": "Tournez légèrement à gauche. Montrez les molaires si possible.",
+      "captured": "✓ Capturé",
+      "analyze_btn": "Analyser ma bouche →",
+      "analyzing": "L'IA examine vos photos...",
+      "xray_flow_title": "Uploadez votre radiographie",
+      "xray_flow_subtitle": "Panoramique, périapicale ou bitewing — JPEG ou PNG",
+      "drop_here": "Déposez votre radio ici",
+      "or_browse": "ou cliquez pour parcourir",
+      "use_demo": "Utiliser les données de démo",
+      "tab_xray": "🩻 Radio",
+      "tab_3d": "🦷 Vue 3D",
+      "tab_progression": "⏳ Sans traitement",
+      "tab_opinion": "🤔 Second avis",
+      "tab_costs": "💰 Coûts",
+      "tab_nearby": "📍 À proximité",
+      "tab_qa": "💬 FAQ",
+      "urgent": "Urgent",
+      "monitor": "Surveiller",
+      "ok": "OK",
+      "detected_issues": "Problèmes détectés",
+      "confidence": "confiance",
+      "nearby_xray_title": "🏥 Centres de radiologie dentaire proches",
+      "nearby_dentist_title": "🦷 Cabinets dentaires proches",
+      "finding_nearby": "Recherche de cliniques proches...",
+      "open_now": "● Ouvert",
+      "closed": "● Fermé",
+      "directions": "📍 Itinéraire",
+      "more_info": "ℹ️ Plus d'infos",
+      "location_denied": "Accès à la localisation refusé. Activez-la pour trouver les cliniques proches.",
+      "qa_common": "💬 Questions fréquentes sur votre résultat",
+      "disclaimer": "⚠️ Outil de dépistage IA, pas un diagnostic clinique. Consultez toujours un dentiste qualifié.",
+      "footer_disclaimer": "⚠️ Prototype de démonstration — pas un outil clinique"
+    }
+  },
+  ar: {
+    translation: {
+      "brand": "دنتالنز",
+      "tagline": "تشخيص بالذكاء الاصطناعي",
+      "hero_title": "رعاية أسنان",
+      "hero_subtitle": "ذكية للجميع.",
+      "hero_desc": "تشخيص دقيق بالذكاء الاصطناعي وفرز احترافي. مصمم للدقة، مبني من أجل الناس.",
+      "selfie_title": "فرز بالسيلفي",
+      "selfie_desc": "تحليل فوري لابتسامتك للكشف عن الأمراض وصحة اللثة والحالات المرئية.",
+      "selfie_cta": "ابدأ الفحص",
+      "xray_title": "تصوير بالأشعة",
+      "xray_desc": "ارفع صورة الأشعة السينية لتحليل دقيق بتقنية YOLOv8 مع إحداثيات الكشف.",
+      "xray_cta": "رفع الأشعة",
+      "choose_title": "ماذا لديك معك؟",
+      "choose_subtitle": "اختر مسارك — سنتولى الباقي.",
+      "path_xray_badge": "تشخيص كامل",
+      "path_selfie_badge": "فرز سريع",
+      "path_xray_title": "لدي صورة أشعة",
+      "path_xray_desc": "ارفع صورة الأشعة. يكشف الذكاء الاصطناعي عن التسوس والترميم والمزيد — مع التكاليف والجدول الزمني.",
+      "path_selfie_title": "لدي هاتفي فقط",
+      "path_selfie_desc": "التقط 4 صور موجهة. يجري الذكاء الاصطناعي فرزاً بصرياً ويجد أقرب مركز أسنان.",
+      "get_started": "ابدأ الآن ←",
+      "selfie_flow_title": "التقط 4 صور موجهة",
+      "selfie_flow_subtitle": "استخدم مصباح هاتفك للحصول على أفضل النتائج.",
+      "shot_front": "منظر أمامي",
+      "shot_upper": "الأسنان العلوية",
+      "shot_lower": "الأسنان السفلية",
+      "shot_side": "الجانب الأيسر",
+      "shot_front_inst": "افتح فمك واعرض أسنانك الأمامية.",
+      "shot_upper_inst": "أمِل رأسك للخلف. أظهر الفك العلوي.",
+      "shot_lower_inst": "أمِل للأمام. أظهر الفك السفلي.",
+      "shot_side_inst": "استدر قليلاً لليسار. أظهر الأضراس إن أمكن.",
+      "captured": "✓ تم التقاطها",
+      "analyze_btn": "تحليل فمي ←",
+      "analyzing": "الذكاء الاصطناعي يفحص صورك...",
+      "xray_flow_title": "ارفع صورة الأشعة",
+      "xray_flow_subtitle": "بانورامية أو محيطية أو عضة — JPEG أو PNG",
+      "drop_here": "أسقط صورة الأشعة هنا",
+      "or_browse": "أو انقر للاستعراض",
+      "use_demo": "استخدام بيانات تجريبية",
+      "tab_xray": "🩻 الأشعة",
+      "tab_3d": "🦷 عرض ثلاثي الأبعاد",
+      "tab_progression": "⏳ بدون علاج",
+      "tab_opinion": "🤔 رأي ثانٍ",
+      "tab_costs": "💰 التكاليف",
+      "tab_nearby": "📍 القريب منك",
+      "tab_qa": "💬 أسئلة شائعة",
+      "urgent": "عاجل",
+      "monitor": "متابعة",
+      "ok": "جيد",
+      "detected_issues": "المشاكل المكتشفة",
+      "confidence": "ثقة",
+      "nearby_xray_title": "🏥 أقرب مراكز التصوير الأشعة",
+      "nearby_dentist_title": "🦷 أقرب عيادات الأسنان",
+      "finding_nearby": "البحث عن العيادات القريبة...",
+      "open_now": "● مفتوح الآن",
+      "closed": "● مغلق",
+      "directions": "📍 الاتجاهات",
+      "more_info": "ℹ️ مزيد من المعلومات",
+      "location_denied": "تم رفض الوصول إلى الموقع. فعّله للعثور على العيادات القريبة.",
+      "qa_common": "💬 أسئلة شائعة حول نتيجتك",
+      "disclaimer": "⚠️ هذه أداة فحص بالذكاء الاصطناعي، وليست تشخيصاً سريرياً. استشر دائماً طبيب أسنان مؤهلاً.",
+      "footer_disclaimer": "⚠️ نموذج تجريبي — ليس أداة سريرية"
+    }
+  }
+};
+
+i18n
+  .use(initReactI18next)
+  .init({
+    resources,
+    lng: "en",
+    fallbackLng: "en",
+    interpolation: { escapeValue: false }
+  });
+
+export default i18n;
