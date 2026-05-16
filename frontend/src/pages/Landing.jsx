@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, UploadCloud, ChevronRight, Shield, Zap, Users, Award } from 'lucide-react';
 import { useLang } from '../context/LangContext';

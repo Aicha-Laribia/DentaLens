@@ -1,96 +1,85 @@
-import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Text } from '@react-three/drei'
-import { useState, useMemo } from 'react'
+import React, { Suspense, useState } from 'react'
+import { Canvas, useLoader } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 import { motion } from 'framer-motion'
 
-function Tooth({ position, color, label, onClick, selected }) {
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('3D Model Error:', error, errorInfo)
+    this.props.setError(true)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null
+    }
+    return this.props.children
+  }
+}
+
+function ModelLoader() {
+  const materials = useLoader(MTLLoader, '/models/3D_Model.mtl')
+  const model = useLoader(OBJLoader, '/models/3D_Model.obj', (loader) => {
+    materials.preload()
+    loader.setMaterials(materials)
+  })
+  
+  return <primitive object={model} scale={50} position={[0, -1.35, 0]} />
+}
+
+function ModelCanvas() {
   return (
-    <group position={position} onClick={onClick}>
-      <mesh>
-        <cylinderGeometry args={[0.18, 0.22, 0.5, 8]} />
-        <meshStandardMaterial
-          color={color}
-          emissive={selected ? '#ffffff' : '#000000'}
-          emissiveIntensity={selected ? 0.3 : 0}
-          roughness={0.3}
-          metalness={0.1}
-        />
-      </mesh>
-      <mesh position={[0, 0.35, 0]}>
-        <sphereGeometry args={[0.18, 8, 8]} />
-        <meshStandardMaterial color={color} roughness={0.3} metalness={0.1} />
-      </mesh>
-    </group>
+    <Canvas camera={{ position: [0, 8, 30], fov: 45 }}>
+      <ambientLight intensity={0.6} />
+      <pointLight position={[5, 5, 5]} intensity={1} />
+      <pointLight position={[-5, -5, -5]} intensity={0.3} />
+      <OrbitControls enablePan={false} minDistance={5} maxDistance={80} />
+      <Suspense fallback={<Model3DLoading />}>
+        <ModelLoader />
+      </Suspense>
+    </Canvas>
   )
 }
 
-function getToothColor(finding) {
-  if (!finding) return '#f5f5f0'
-  if (finding.suspicious_lesion) return '#7c3aed'
-  const maxProb = Math.max(...(finding.illnesses?.map(i => i.probability) || [0]))
-  if (maxProb > 75) return '#dc2626'
-  if (maxProb > 45) return '#d97706'
-  if (maxProb > 0)  return '#facc15'
-  return '#10b981'
+function Model3DLoading() {
+  return (
+    <mesh>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color="#3b82f6" wireframe />
+    </mesh>
+  )
 }
 
 export default function ToothModel3D({ findings }) {
-  const [selected, setSelected] = useState(null)
-
-  const findingMap = useMemo(() => {
-    const map = {}
-    findings.forEach(f => { map[f.tooth] = f })
-    return map
-  }, [findings])
-
-  // Upper arch: FDI 11–18 and 21–28
-  const upper = [
-    ['18','17','16','15','14','13','12','11'],
-    ['21','22','23','24','25','26','27','28']
-  ]
-  // Lower arch: FDI 48–41 and 31–38
-  const lower = [
-    ['48','47','46','45','44','43','42','41'],
-    ['31','32','33','34','35','36','37','38']
-  ]
-
-  const teeth = []
-  upper.forEach((row, ri) => {
-    row.forEach((fdi, i) => {
-      const x = ri === 0 ? -(i - 3.5) * 0.55 : (i - 3.5) * 0.55
-      const z = -Math.abs(i - 3.5) * 0.15 + 0.5
-      teeth.push({ fdi, x, y: 0.8, z })
-    })
-  })
-  lower.forEach((row, ri) => {
-    row.forEach((fdi, i) => {
-      const x = ri === 0 ? -(i - 3.5) * 0.55 : (i - 3.5) * 0.55
-      const z = -Math.abs(i - 3.5) * 0.15 + 0.5
-      teeth.push({ fdi, x, y: -0.8, z })
-    })
-  })
-
-  const selectedFinding = selected ? findingMap[selected] : null
+  const primaryFinding = findings?.[0] ?? null
+  const [modelError, setModelError] = useState(false)
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       <div className="flex-1 bg-gray-900 rounded-2xl overflow-hidden" style={{ height: 400 }}>
-        <Canvas camera={{ position: [0, 2, 6], fov: 45 }}>
-          <ambientLight intensity={0.6} />
-          <pointLight position={[5, 5, 5]} intensity={1} />
-          <pointLight position={[-5, -5, -5]} intensity={0.3} />
-          <OrbitControls enablePan={false} minDistance={3} maxDistance={10} />
-          {teeth.map(({ fdi, x, y, z }) => (
-            <Tooth
-              key={fdi}
-              position={[x, y, z]}
-              color={getToothColor(findingMap[fdi])}
-              label={fdi}
-              selected={selected === fdi}
-              onClick={e => { e.stopPropagation(); setSelected(fdi) }}
-            />
-          ))}
-        </Canvas>
+        {modelError ? (
+          <div className="w-full h-full flex items-center justify-center text-white">
+            <div className="text-center">
+              <p className="text-lg mb-2">Unable to load 3D model</p>
+              <p className="text-sm text-gray-400">Please try refreshing the page</p>
+            </div>
+          </div>
+        ) : (
+          <ErrorBoundary setError={setModelError}>
+            <ModelCanvas />
+          </ErrorBoundary>
+        )}
       </div>
 
       <div className="lg:w-64 space-y-4">
@@ -112,37 +101,36 @@ export default function ToothModel3D({ findings }) {
           ))}
         </div>
 
-        {/* Selected tooth info */}
-        {selected && (
+        {primaryFinding ? (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white rounded-xl p-4 shadow"
           >
             <h4 className="font-semibold text-primary text-sm mb-2">
-              Tooth {selected}
+              Top finding: Tooth {primaryFinding.tooth}
             </h4>
-            {selectedFinding?.illnesses?.length > 0 ? (
-              selectedFinding.illnesses.map((ill, i) => (
-                <div key={i} className="mb-2">
-                  <p className="text-xs font-medium text-gray-700">{ill.name}</p>
-                  <div className="mt-1 h-1.5 bg-gray-100 rounded-full">
-                    <div
-                      className="h-1.5 rounded-full bg-danger"
-                      style={{ width: `${ill.probability}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{Math.round(ill.probability)}% confidence</p>
+            {primaryFinding.illnesses?.map((ill, i) => (
+              <div key={i} className="mb-2">
+                <p className="text-xs font-medium text-gray-700">{ill.name}</p>
+                <div className="mt-1 h-1.5 bg-gray-100 rounded-full">
+                  <div
+                    className="h-1.5 rounded-full bg-danger"
+                    style={{ width: `${ill.probability}%` }}
+                  />
                 </div>
-              ))
-            ) : (
-              <p className="text-xs text-success">No issues detected</p>
-            )}
+                <p className="text-xs text-gray-400 mt-0.5">{Math.round(ill.probability)}% confidence</p>
+              </div>
+            ))}
           </motion.div>
+        ) : (
+          <div className="bg-white rounded-xl p-4 shadow text-sm text-slate-600">
+            No specific tooth selected. The 3D model shows the full dental arch and the most important scan finding by default.
+          </div>
         )}
 
         <p className="text-xs text-gray-400 text-center">
-          Drag to rotate · Scroll to zoom · Click a tooth
+          Drag to rotate · Scroll to zoom · Use the menu above to switch views.
         </p>
       </div>
     </div>

@@ -1,9 +1,17 @@
 from fastapi import FastAPI, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from PIL import Image
 import io
 import time
 import uuid
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+dotenv_path = os.path.join(project_root, '.env')
+load_dotenv(dotenv_path)
 
 try:
     from ultralytics import YOLO
@@ -240,7 +248,7 @@ def guess_tooth_location(x_center, img_width):
         return "Anterior (Front)"
 
 @app.post("/yolo-analyze")
-async def analyze_xray(image: UploadFile = File(...)):
+async def analyze_yolo_scan(image: UploadFile = File(...)):
     # 1. Lecture de l'image
     contents = await image.read()
     img = Image.open(io.BytesIO(contents)).convert("RGB")
@@ -342,11 +350,74 @@ async def analyze_xray(image: UploadFile = File(...)):
 import os
 # ... existing imports
 
-# Configuration for real API
-REAL_API_URL = os.getenv("THAKAAMED_API_KEY")
-API_KEY = os.getenv("THAKAAMED_API_KEY")
+THAKAAMED_API_URL = os.getenv("THAKAAMED_API_URL", "https://aiv4.thakaamed.com/api/v2.3/en/analyze/radiography/")
+THAKAAMED_API_KEY = os.getenv("THAKAAMED_API_KEY")
+THAKAAMED_FACILITY_CODE = os.getenv("THAKAAMED_FACILITY_CODE")
 
-# ... existing code
+PLACEHOLDER_KEYS = {
+    "your_api_key",
+    "your_api_key_here",
+    "your_facility_code",
+    "your_facility_code_here",
+}
+
+def _real_api_enabled() -> bool:
+    if not (THAKAAMED_API_KEY and THAKAAMED_FACILITY_CODE):
+        return False
+
+    key = THAKAAMED_API_KEY
+    facility = THAKAAMED_FACILITY_CODE
+
+    if key in PLACEHOLDER_KEYS or facility in PLACEHOLDER_KEYS:
+        return False
+
+    return True
+
+def _poll_thakaamed_result(requests_module, slug: str, lang: str = "en", attempts: int = 20, interval: float = 3.0):
+    """Poll Thakaamed API until analysis is done.
+    
+    The API endpoint changes language via the URL path, not query params.
+    Example: https://aiv4.thakaamed.com/api/v2.3/en/analyze/radiography/?id=<slug>
+    """
+    # Reconstruct the endpoint with the correct language
+    base_url = os.getenv("THAKAAMED_API_URL", "https://aiv4.thakaamed.com/api/v2.3/en/analyze/radiography/")
+    
+    # Replace language in URL if needed
+    endpoint = base_url.replace("/en/", f"/{lang}/")
+    
+    for attempt in range(attempts):
+        # Sleep before checking (except on first attempt)
+        if attempt > 0:
+            time.sleep(interval)
+        
+        try:
+            # Only pass id parameter, no facility_code or lang on GET
+            response = requests_module.get(endpoint, params={"id": slug}, timeout=30)
+        except Exception as exc:
+            print(f"Polling error on attempt {attempt + 1}: {exc}")
+            continue
+        
+        if response.status_code != 200:
+            print(f"Polling returned status {response.status_code}")
+            continue
+        
+        try:
+            data = response.json()
+        except Exception as exc:
+            print(f"Failed to parse JSON response: {exc}")
+            continue
+        
+        # Check if analysis is done
+        if data.get("is_done") is True:
+            # Check for API errors
+            if data.get("error_status") is True:
+                error_msg = data.get('error_message') or data.get('message') or "Unknown API error"
+                print(f"Thakaamed error: {error_msg}")
+                return None
+            return data
+    
+    print(f"Polling timed out after {attempts} attempts")
+    return None
 
 @app.post("/xray-analyze")
 async def analyze_xray(image: UploadFile = File(...)):
@@ -359,21 +430,41 @@ async def analyze_xray(image: UploadFile = File(...)):
     except Exception:
         pass
 
-    if REAL_API_URL and API_KEY:
-        # Call real API
+    if _real_api_enabled():
         import requests
-        files = {'image': ('xray.jpg', contents, 'image/jpeg')}
-        headers = {'Authorization': f'Bearer {API_KEY}'}
-        response = requests.post(REAL_API_URL, files=files, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            slug = data.get('slug')
+        file_content_type = image.content_type or 'application/octet-stream'
+        files = {
+            'image': ('xray', contents, file_content_type)
+        }
+        data = {
+            'api_key': THAKAAMED_API_KEY,
+            'facility_code': THAKAAMED_FACILITY_CODE,
+        }
+        response = requests.post(THAKAAMED_API_URL, data=data, files=files, timeout=60)
+        if response.ok:
+            payload = response.json()
+            slug = payload.get('id') or payload.get('slug')
             if slug:
-                return {"slug": slug, "image_width": img_width, "image_height": img_height}
-        # Fallback to placeholder
-        return build_placeholder_xray_response()
+                return {
+                    "slug": slug,
+                    "id": payload.get('id'),
+                    "results_url": payload.get('results'),
+                    "message": payload.get('message', 'Analysis submitted'),
+                    "is_done": payload.get('is_done', False),
+                    "image_width": img_width,
+                    "image_height": img_height
+                }
+            return JSONResponse(status_code=502, content={
+                "error": "API response did not include an analysis id.",
+                "payload": payload
+            })
 
-    # Placeholder mode
+        return JSONResponse(status_code=502, content={
+            "error": "Thakaamed upload failed.",
+            "status_code": response.status_code,
+            "text": response.text
+        })
+
     response = build_placeholder_xray_response()
     response["image_width"] = img_width
     response["image_height"] = img_height
@@ -381,14 +472,21 @@ async def analyze_xray(image: UploadFile = File(...)):
 
 @app.get("/xray-results/{slug}")
 async def get_xray_results(slug: str, lang: str = "en"):
-    if REAL_API_URL and API_KEY:
+    """Retrieve analysis results by slug. Polls Thakaamed if real API is enabled."""
+    if _real_api_enabled():
         import requests
-        url = f"{REAL_API_URL}/results/{slug}?lang={lang}"
-        headers = {'Authorization': f'Bearer {API_KEY}'}
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            return response.json()
-    # Fallback
+        result = _poll_thakaamed_result(requests, slug, lang=lang)
+        if result is not None:
+            # Return the full Thakaamed response
+            return result
+        # If polling failed or timed out
+        return JSONResponse(status_code=504, content={
+            "error": "Analysis polling timed out. Please try again.",
+            "slug": slug,
+            "is_done": False
+        })
+    
+    # Fallback to placeholder
     return build_placeholder_xray_response()
 
 

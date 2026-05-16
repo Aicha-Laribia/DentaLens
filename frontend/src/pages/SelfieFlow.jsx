@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, UploadCloud, Lightbulb, CheckCircle, AlertCircle } from 'lucide-react';
 import { useLang } from '../context/LangContext';

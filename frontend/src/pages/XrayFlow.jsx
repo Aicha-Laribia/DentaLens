@@ -68,15 +68,13 @@ export default function XrayFlow() {
           placeholderMode: !analysisData.slug
         }
       })
-    } catch (e) {
+    } catch (err) {
       clearInterval(interval)
-      navigate('/xray/results', {
-        state: {
-          data: DEMO_XRAY_RESULT,
-          imageUrl: preview || URL.createObjectURL(file),
-          placeholderMode: true
-        }
-      })
+      setError(
+        err?.response?.data?.error ||
+        'Unable to analyze your X-ray. Please check the backend and API settings.'
+      )
+      setLoading(false)
     }
   }
 

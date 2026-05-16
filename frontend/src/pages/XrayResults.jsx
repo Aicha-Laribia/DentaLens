@@ -1,17 +1,15 @@
-import { useMemo, useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import axios from 'axios'
 import Header from '../components/Header'
-import ToothModel3D from '../components/ToothModel3D'
 import NearbyMap from '../components/NearbyMap'
 import { normalizeXrayResult, severityForFinding } from '../utils/xrayReport'
 import { useLang } from '../context/LangContext'
 
 const TABS = [
   { id: 'xray', label: '🩻 X-Ray' },
-  { id: '3d', label: '🦷 3D Mouth' },
   { id: 'progression', label: '⏳ If Untreated' },
   { id: 'opinion', label: '🤔 Treatment review' },
   { id: 'costs', label: '💰 Costs' },
@@ -33,21 +31,59 @@ export default function XrayResults() {
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const findingsRef = useRef(null)
-  const modelRef = useRef(null)
   const nearbyRef = useRef(null)
   const [selectedImage, setSelectedImage] = useState(null)
   const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(Boolean(state?.slug))
 
   useEffect(() => {
+    let cancelled = false
+    let pollTimeout = null
+
+    const pollResults = async (attempts = 0, maxAttempts = 20) => {
+      if (cancelled) return
+      
+      try {
+        const res = await axios.get(`http://localhost:8000/xray-results/${state.slug}?lang=${lang}`)
+        if (!cancelled) {
+          // Check if analysis is done
+          if (res.data.is_done === true) {
+            setData(normalizeXrayResult(res.data, state.imageUrl))
+            setLoading(false)
+          } else if (attempts < maxAttempts) {
+            // Still processing, poll again in 2 seconds
+            pollTimeout = setTimeout(() => pollResults(attempts + 1, maxAttempts), 2000)
+          } else {
+            // Polling timed out
+            setData(normalizeXrayResult({}, state.imageUrl))
+            setLoading(false)
+          }
+        }
+      } catch (err) {
+        if (cancelled) return
+        
+        // If error, try polling again unless we've exhausted attempts
+        if (attempts < maxAttempts) {
+          pollTimeout = setTimeout(() => pollResults(attempts + 1, maxAttempts), 2000)
+        } else {
+          console.error('Results retrieval failed:', err)
+          setData(normalizeXrayResult({}, state.imageUrl))
+          setLoading(false)
+        }
+      }
+    }
+
     if (state?.slug) {
       setLoading(true)
-      axios.get(`http://localhost:8000/xray-results/${state.slug}?lang=${lang}`)
-        .then(res => setData(normalizeXrayResult(res.data, state.imageUrl)))
-        .catch(() => setData(normalizeXrayResult({}, state.imageUrl)))
-        .finally(() => setLoading(false))
+      pollResults()
     } else if (state?.data) {
       setData(normalizeXrayResult(state.data, state.imageUrl))
+      setLoading(false)
+    }
+
+    return () => {
+      cancelled = true
+      if (pollTimeout) clearTimeout(pollTimeout)
     }
   }, [state, lang])
 
@@ -56,8 +92,6 @@ export default function XrayResults() {
 
   const urgent = data.findings.filter(f => f.illnesses.some(i => i.probability >= 75))
   const monitor = data.findings.filter(f => severityForFinding(f) === 'monitor')
-  const clearCount = Math.max(0, (data.summary?.teeth_detected || 32) - urgent.length - monitor.length)
-  const imageSrc = data.draw_image || data.displayImage || data.original_image
   const isPlaceholder = state?.placeholderMode || data.id?.includes('placeholder') || data.slug?.includes('placeholder')
 
   const allFindings = data.findings.flatMap(finding =>
@@ -156,7 +190,9 @@ export default function XrayResults() {
       )}
 
       <main className="max-w-7xl mx-auto w-full px-4 py-8 space-y-8">
-        <section className="rounded-[2rem] bg-white p-6 shadow-xl">
+        {tab === 'xray' && (
+          <>
+            <section className="rounded-[2rem] bg-white p-6 shadow-xl">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
             <div className="lg:flex-1 space-y-5">
               <div className="inline-flex items-center gap-2 rounded-full bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700">X-ray report</div>
@@ -195,7 +231,6 @@ export default function XrayResults() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <button onClick={() => scrollTo(findingsRef)} className="rounded-3xl bg-teal px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary">Go to findings</button>
-                <button onClick={() => scrollTo(modelRef)} className="rounded-3xl border border-teal bg-white px-5 py-3 text-sm font-semibold text-teal transition hover:bg-teal hover:text-white">Go to 3D model</button>
                 <button onClick={() => scrollTo(nearbyRef)} className="rounded-3xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">See nearby care</button>
               </div>
             </div>
@@ -245,9 +280,21 @@ export default function XrayResults() {
               </div>
             </div>
           </div>
+            </section>
+
+            <section className="flex flex-wrap gap-3 px-6">
+          {TABS.map(tabItem => (
+            <button
+              key={tabItem.id}
+              onClick={() => setTab(tabItem.id)}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${tab === tabItem.id ? 'bg-teal text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+            >
+              {tabItem.label}
+            </button>
+          ))}
         </section>
 
-        <section ref={findingsRef} className="rounded-[2rem] bg-white p-6 shadow-xl">
+            <section ref={findingsRef} className="rounded-[2rem] bg-white p-6 shadow-xl">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.22em] text-teal-700">Results overview</p>
@@ -284,20 +331,14 @@ export default function XrayResults() {
               </motion.div>
             ))}
           </div>
-        </section>
-
-        {tab === '3d' && (
-          <section ref={modelRef} className="rounded-[2rem] bg-white p-6 shadow-xl">
-            <h2 className="font-bold text-primary text-lg mb-2">Interactive 3D Mouth Model</h2>
-            <p className="text-gray-400 text-sm mb-6">Each tooth is colored by severity based on AI detections. Drag to rotate, scroll to zoom, click a tooth for details.</p>
-            <ToothModel3D findings={data.findings} />
-          </section>
+            </section>
+          </>
         )}
 
         {tab === 'progression' && (
           <section className="space-y-6">
             <div className="rounded-[2rem] border border-blue-100 bg-blue-50 p-6 text-sm text-blue-800">
-              <strong>Why this matters:</strong> Dental issues are often painless until they become emergencies. Acting early protects health and reduces cost.
+              <strong>Why this matters:</strong> Early treatment reduces risk and cost.
             </div>
             {data.progressions.length === 0 ? (
               <div className="rounded-[2rem] bg-white p-12 text-center shadow-xl">
@@ -305,34 +346,19 @@ export default function XrayResults() {
                 <p className="text-teal font-semibold text-lg">No major progressive pathologies detected.</p>
               </div>
             ) : data.progressions.map((prog, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="rounded-[2rem] bg-white shadow-xl overflow-hidden">
-                <div className="flex flex-col gap-3 bg-primary px-6 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
-                  <h3 className="font-semibold">{prog.label} — Tooth {prog.tooth}</h3>
-                  <span className="text-sm opacity-75">{Math.round(prog.probability)}% confidence</span>
-                </div>
-                <div className="grid gap-6 p-6 lg:grid-cols-2">
+              <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }} className="rounded-[1rem] bg-white shadow-md p-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-semibold text-danger mb-4">❌ If left untreated</h4>
-                    <div className="relative pl-8">
-                      <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-red-100" />
-                      {prog.untreated.map((stage, j) => (
-                        <div key={j} className="relative mb-4">
-                          <span className={`absolute -left-5 inline-flex h-4 w-4 rounded-full border-2 ${stage.severity >= 4 ? 'border-red-500 bg-red-100' : stage.severity >= 3 ? 'border-orange-400 bg-orange-50' : 'border-yellow-400 bg-yellow-50'}`} />
-                          <div className={`rounded-2xl p-4 ${stage.severity >= 4 ? 'bg-red-50 border border-red-200' : stage.severity >= 3 ? 'bg-orange-50 border border-orange-200' : 'bg-yellow-50 border border-yellow-200'}`}>
-                            <div className="text-xs text-gray-500 mb-1">{stage.time}</div>
-                            <div className="text-sm text-gray-700">{stage.desc}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-success mb-4">✅ If treated now</h4>
-                    <div className="flex h-full items-center rounded-3xl border border-green-200 bg-green-50 p-6 text-sm text-gray-700">
-                      {prog.treated}
-                    </div>
+                    <div className="font-semibold">{prog.label} — Tooth {prog.tooth}</div>
+                    <div className="text-xs text-gray-500">{Math.round(prog.probability)}% confidence</div>
                   </div>
                 </div>
+                <ul className="mt-3 space-y-2 text-sm text-gray-700">
+                  {prog.untreated.slice(0,3).map((stage, j) => (
+                    <li key={j}>• {stage.time}: {stage.desc}</li>
+                  ))}
+                </ul>
+                <div className="mt-3 rounded-md border border-green-200 bg-green-50 p-3 text-sm text-gray-800">If treated: {prog.treated}</div>
               </motion.div>
             ))}
           </section>

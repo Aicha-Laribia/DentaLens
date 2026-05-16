@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AlertCircle, CheckCircle2, ArrowLeft, Percent } from 'lucide-react';
 import { useLang } from '../context/LangContext';
