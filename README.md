@@ -46,7 +46,7 @@ DentaLens is a dual-path AI dental triage and analysis platform built in 48 hour
 
 > ThakaaMed API annotated overlay (left) and interactive 3D tooth model colored by pathology category (right). 28 teeth annotated, drag to orbit, click to inspect.
 
-![X-Ray + 3D](docs/screenshots/xray.png)
+![X-Ray + 3D](docs/screenshots/xray.jpeg)
 
 ---
 
@@ -134,7 +134,7 @@ Analyzes 4 guided mouth photos for:
 - Escalation path → Path 2 when X-ray is obtained
 
 
-![Selfie](docs/screenshots/sef.png)
+![Selfie](docs/screenshots/sef.jpeg)
 
 **Path 2 — X-Ray Analysis**
 - Zoomable annotated X-ray (pinch/scroll to inspect any region)
