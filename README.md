@@ -169,7 +169,7 @@ npm run dev
 
 ## Team
 
-**Team23 — MedConnect Hackathon 2025**
+**Team23 — MedConnect Hackathon 2026**
 
 
 ***Alaa Belga***
@@ -186,7 +186,7 @@ DentaLens is a hackathon prototype. The AI models used here are diagnostic-aid t
 
 <div align="center">
 
-**🦷 DentaLens** · MedConnect Hackathon 2025 · 3rd Place 🏆
+**🦷 DentaLens** · MedConnect Hackathon 2026 · 3rd Place 🏆
 
 *Making dental care understandable and accessible for everyone.*
 
