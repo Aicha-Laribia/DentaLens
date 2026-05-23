@@ -28,21 +28,40 @@ DentaLens is a dual-path AI dental triage and analysis platform built in 48 hour
 
 | Path | Input | Output |
 |------|-------|--------|
-| **Path 1 — Selfie Triage** | 4 guided mouth photos | Green / Yellow / Red urgency level + nearest imaging center |
+| **Path 1 — Selfie Triage** | mouth photo | Green / Yellow / Red urgency level |
 | **Path 2 — X-Ray Analysis** | Dental radiograph (JPEG/PNG) | Full AI diagnosis + 3D model + costs + second opinion |
 
 ---
 
-## Screenshots
+
 
 ### Landing Page
-> Two-path entry — selfie triage or X-ray upload. Trilingual (EN / FR / AR) with automatic RTL support.
+> Two-path entry — selfie triage or X-ray upload. Trilingual (EN / FR / AR) 
 
 ![Landing](docs/screenshots/landing.png)
 
 ---
 
+**Path 1 — Selfie Triage**
+
+- AI clinical triage: 🟢 Green / 🟡 Yellow / 🔴 Red
+- Oral cancer early-warning flag
+- Nearest X-ray imaging centers 
+- Escalation path → Path 2 when X-ray is obtained
+
+
+![Selfie](docs/screenshots/sef.jpg)
+
+
 ### Path 2 — X-Ray Analysis + 3D Viewer
+
+**Path 2 — X-Ray Analysis**
+- Zoomable annotated X-ray (pinch/scroll to inspect any region)
+- Interactive 3D tooth model with per-pathology color coding
+- VR mode (WebXR, one-flag enable)
+- Progression timeline: untreated vs treated outcome per pathology
+- Nearest dentists map 
+
 
 > ThakaaMed API annotated overlay (left) and interactive 3D tooth model colored by pathology category (right). 28 teeth annotated, drag to orbit, click to inspect.
 
@@ -82,13 +101,8 @@ dentalens/
 │   ├── main.py                # /analyze /selfie-triage /chat /nearby /yolo-analyze
 │   ├── best.pt                # Trained YOLOv8n weights
 │   └── static/model/          # Served 3D viewer HTML + data JSON
-│
-└── HackathonCOPY/
-    ├── Teeth_LP_triangulated/ # Blender OBJ mesh + FDI labels + textures
-    └── scripts/
-        ├── build_annotated_dental_model.py   # Generates 3D viewer from API results
-        ├── medconnect_web_app.py             # Flask server for 3D sessions
-        └── templates/medconnect_viewer.html  # Three.js WebGL viewer
+
+
 ```
 
 ---
@@ -103,7 +117,7 @@ Production dental AI used by real clinics. Per analysis:
 - Supports: panoramic, periapical, bitewing, lateral cephalometric
 
 ### YOLOv8n — Custom Trained (X-Ray Path)
-Trained from scratch on a clinical dental benchmarking dataset:
+Trained from scratch on a clinical dental dataset:
 
 | Metric | Score |
 |--------|-------|
@@ -115,42 +129,10 @@ Trained from scratch on a clinical dental benchmarking dataset:
 
 30 epochs · Tesla T4 GPU · 6.2 MB model · 2.2 ms inference
 
-### Claude Vision (Selfie Triage Path)
-Analyzes 4 guided mouth photos for:
-- Gum health (color, recession, inflammation)
-- Visible decay and tartar
-- Oral lesion detection (leukoplakia, erythroplakia — oral cancer early warning)
-- Returns: triage level, per-zone observations, and recommended action
-
 ---
 
-## Features
-
-**Path 1 — Selfie Triage**
-- 4-step guided photo capture with instructions per zone
-- AI clinical triage: 🟢 Green / 🟡 Yellow / 🔴 Red
-- Oral cancer early-warning flag
-- Nearest X-ray imaging centers via Google Places API
-- Escalation path → Path 2 when X-ray is obtained
 
 
-![Selfie](docs/screenshots/sef.jpeg)
-
-**Path 2 — X-Ray Analysis**
-- Zoomable annotated X-ray (pinch/scroll to inspect any region)
-- Interactive 3D tooth model with per-pathology color coding
-- VR mode (WebXR, one-flag enable)
-- Progression timeline: untreated vs treated outcome per pathology
-- Second opinion: compare AI findings against dentist's proposed plan
-- Cost estimation in Moroccan Dirhams (MAD)
-- Smart Q&A: rule-based, confidence-driven — zero API cost, zero hallucination risk
-- Nearest dentists map via Google Places API
-
-**General**
-- Trilingual: English / French / Arabic (full RTL support)
-- Demo mode: cached results, zero tokens consumed during development
-
----
 
 ## Setup
 
@@ -219,36 +201,15 @@ npm run dev
 
 ---
 
-## API Endpoints
-
-| Method | Route | Description |
-|--------|-------|-------------|
-| `POST` | `/analyze` | ThakaaMed X-ray analysis + YOLO detection + cost estimation |
-| `POST` | `/yolo-analyze` | YOLO-only inference on uploaded image |
-| `POST` | `/selfie-triage` | Claude Vision triage on mouth photos |
-| `POST` | `/second-opinion` | Compare dentist plan vs AI findings |
-| `POST` | `/chat` | Contextual Q&A about analysis results |
-| `GET`  | `/nearby` | Google Places: dentists or imaging centers near coordinates |
-
----
-
-## 3D Model
-
-The 3D dental mesh is a professional asset by [Simon Telezhkin](https://www.artstation.com/artwork/WW8xJ):
-- 14,417 polygons · 7,217 vertices · 1 UDIM texture set (4K)
-- Vertex-labeled per FDI tooth number via heuristic X-axis binning
-- Pathologies painted as radial color spots with smooth cosine falloff
-- Orbit, zoom, and click-to-inspect via Three.js WebGL viewer
 
 ---
 
 ## Roadmap
 
-- [ ] Oral cancer fine-tuned classifier (TCIA + Kaggle lesion dataset)
+- [ ] Oral cancer fine-tuned classifier 
 - [ ] Darija voice assistant for rural accessibility
 - [ ] Multi-scan longitudinal tracking with deterioration alerts
 - [ ] Full VR activation for dental school training
-- [ ] Offline mobile app via ONNX.js client-side inference
 - [ ] ThakaaMed commercial licence + clinic integrations
 
 ---
