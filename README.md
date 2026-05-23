@@ -12,11 +12,11 @@
 [![YOLOv8](https://img.shields.io/badge/YOLOv8-mAP50%3A82.3%25-0D9488?style=flat-square)](https://ultralytics.com)
 [![License](https://img.shields.io/badge/License-MIT-0F3460?style=flat-square)](LICENSE)
 
-> ⚠️ **Demo prototype** — not a certified clinical tool. Always consult a qualified dentist.
+
 
 ---
 
-*🏆 3rd Place — MedConnect Hackathon 2025*
+*🏆 3rd Place — MedConnect Hackathon 2026*
 
 </div>
 
@@ -85,25 +85,6 @@ DentaLens is a dual-path AI dental triage and analysis platform built in 48 hour
 
 ![VR View](docs/screenshots/vr_annotat.png)
 
----
-
-## Architecture
-
-```
-dentalens/
-├── frontend/                  # React + Vite + Tailwind
-│   └── src/
-│       ├── pages/             # Landing, PathChoice, XrayFlow, SelfieFlow, Results
-│       ├── components/        # XrayViewer, ToothModel3D, NearbyMap, SmartQA, ChatBot
-│       └── i18n.js            # EN / FR / AR translations
-│
-├── backend/                   # FastAPI
-│   ├── main.py                # /analyze /selfie-triage /chat /nearby /yolo-analyze
-│   ├── best.pt                # Trained YOLOv8n weights
-│   └── static/model/          # Served 3D viewer HTML + data JSON
-
-
-```
 
 ---
 
@@ -139,9 +120,8 @@ Trained from scratch on a clinical dental dataset:
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+
-- Google Places API key
-- ThakaaMed API key + facility code (hackathon or commercial)
-- Anthropic API key (free tier sufficient for demo)
+- ThakaaMed API key + facility code 
+
 
 ### Backend
 
@@ -156,31 +136,12 @@ Create `backend/.env`:
 ```env
 THAKAAMED_API_KEY=your_key
 THAKAAMED_FACILITY=your_facility
-ANTHROPIC_API_KEY=your_key
-GOOGLE_PLACES_API_KEY=your_key
 ```
 
 ```bash
 uvicorn main:app --reload --port 8000
 ```
 
-### 3D Viewer (Flask)
-
-```bash
-cd HackathonCOPY/HackathonCOPY
-pip install flask python-dotenv requests
-```
-
-Create `.env` in that directory:
-```env
-THAKAA_API_KEY=your_key
-THAKAA_FACILITY_CODE=your_facility
-```
-
-```bash
-python scripts/medconnect_web_app.py
-# Runs on http://127.0.0.1:5050
-```
 
 ### Frontend
 
@@ -189,18 +150,10 @@ cd frontend
 npm install
 ```
 
-Create `frontend/.env`:
-```env
-VITE_GOOGLE_MAPS_KEY=your_key
-```
-
 ```bash
 npm run dev
 # Runs on http://localhost:5173
 ```
-
----
-
 
 ---
 
@@ -218,10 +171,10 @@ npm run dev
 
 **Team23 — MedConnect Hackathon 2025**
 
-| | |
-|---|---|
-| **Alaa Belga** | Frontend · UI/UX · Pitch |
-| **Aicha Laribia** | Backend · AI · 3D Integration |
+
+***Alaa Belga***
+
+***Aicha Laribia***
 
 ---
 
